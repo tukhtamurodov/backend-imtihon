@@ -1,6 +1,9 @@
 let joi = require("joi");
 const queryPg = require("../lib/queryPg");
 const { pg } = require("../lib/pg");
+const path = require("path");
+let uuid = require("uuid").v4;
+const fileUpload = require("express-fileupload");
 
 let schema = joi.object().keys({
   name: joi.string().required().min(3).max(64),
@@ -17,13 +20,22 @@ let schemaUUID = joi.object().keys({
 });
 
 let post = async (req, res, next) => {
-  let { name, about, telegram, categoryId, logo, phone, instagram } = req.body;
+  let { name, about, telegram, categoryId, phone, instagram } = req.body;
+  let image = req?.files?.image;
+  if (!image) {
+    return next({ status: 400, message: "imgage joylamading!!!" });
+  }
+  let fileType = path.extname(image.name);
+  let imageName = uuid() + fileType;
+
+  let pathImg = path.resolve("uploads", "logos", imageName);
+
   let error = schema.validate({
     name,
     about,
     categoryId,
     telegram,
-    logo,
+    logo: imageName,
     instagram,
     phone,
   });
@@ -37,12 +49,17 @@ let post = async (req, res, next) => {
     queryPg.centers.post,
     name,
     about,
-    logo,
+    imageName,
     categoryId,
     phone,
     telegram,
     instagram
   );
+
+  if (rows.length > 0) {
+    image.mv(pathImg);
+  }
+
   return res.json({ message: "ok", rows });
 };
 
@@ -53,12 +70,21 @@ let get = async (req, res, next) => {
 
 let put = async (req, res, next) => {
   let { name, about, telegram, categoryId, logo, phone, instagram } = req.body;
+  let image = req?.files?.image;
+  if (!image) {
+    return next({ status: 400, message: "imgage joylamading!!!" });
+  }
+  let fileType = path.extname(image.name);
+  let imageName = uuid() + fileType;
+
+  let pathImg = path.resolve("uploads", "logos", imageName);
+
   let error = schema.validate({
     name,
     about,
     categoryId,
     telegram,
-    logo,
+    logo: imageName,
     instagram,
     phone,
   });
@@ -78,13 +104,17 @@ let put = async (req, res, next) => {
     queryPg.centers.put,
     name,
     about,
-    logo,
+    imageName,
     categoryId,
     phone,
     telegram,
     instagram,
     id
   );
+
+  if (rows.length > 0) {
+    image.mv(pathImg);
+  }
   return res.json(rows[0]);
 };
 
