@@ -2,7 +2,11 @@ let jwt = require("jsonwebtoken");
 let { verify, JsonWebTokenError, TokenExpiredError } = jwt;
 
 const verifyUser = (req, _, next) => {
-  if (req.url === "/login" || req.url === "/verify-token") {
+  if (
+    req.url === "/login" ||
+    req.url === "/verify-token" ||
+    req.method === "GET"
+  ) {
     return next();
   }
   let token = req.headers["access-token"];

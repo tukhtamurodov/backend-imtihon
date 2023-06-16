@@ -18,9 +18,25 @@ let schemaUUID = joi.object().keys({
 });
 
 let post = async (req, res, next) => {
-  let { name, about, price, lessonDuration, totalDuration, examInfo,courseStartedDate,filialId } = req.body;
+  let {
+    name,
+    about,
+    price,
+    lessonDuration,
+    totalDuration,
+    examInfo,
+    courseStartedDate,
+    filialId,
+  } = req.body;
   let error = schema.validate({
-    name, about, price, lessonDuration, totalDuration, examInfo,courseStartedDate,filialId
+    name,
+    about,
+    price,
+    lessonDuration,
+    totalDuration,
+    examInfo,
+    courseStartedDate,
+    filialId,
   });
 
   if (error?.error) {
@@ -28,22 +44,48 @@ let post = async (req, res, next) => {
     return next({ status: 400, message: message });
   }
 
-  let rows = await pg(
+  let rows = await pg(next,
     queryPg.courses.post,
-    name, about, price, lessonDuration, totalDuration, examInfo,courseStartedDate,filialId
+    name,
+    about,
+    price,
+    lessonDuration,
+    totalDuration,
+    examInfo,
+    courseStartedDate,
+    filialId
   );
+  if (rows?.message) {
+    return next({ message: rows.message, status: 401 });
+  }
   return res.json({ message: "ok", rows });
 };
 
 let get = async (req, res, next) => {
-  let rows = await pg(queryPg.courses.get);
+  let rows = await pg(next,queryPg.courses.get);
   return res.json(rows);
 };
 
 let put = async (req, res, next) => {
-  let { name, about, price, lessonDuration, totalDuration, examInfo,courseStartedDate,filialId } = req.body;
+  let {
+    name,
+    about,
+    price,
+    lessonDuration,
+    totalDuration,
+    examInfo,
+    courseStartedDate,
+    filialId,
+  } = req.body;
   let error = schema.validate({
-    name, about, price, lessonDuration, totalDuration, examInfo,courseStartedDate,filialId
+    name,
+    about,
+    price,
+    lessonDuration,
+    totalDuration,
+    examInfo,
+    courseStartedDate,
+    filialId,
   });
   let { id } = req.params;
   let validate = schemaUUID.validate({ id });
@@ -57,11 +99,21 @@ let put = async (req, res, next) => {
     return next({ status: 400, message: message });
   }
 
-  let rows = await pg(
+  let rows = await pg(next,
     queryPg.courses.put,
-    name, about, price, lessonDuration, totalDuration, examInfo,courseStartedDate,filialId,
+    name,
+    about,
+    price,
+    lessonDuration,
+    totalDuration,
+    examInfo,
+    courseStartedDate,
+    filialId,
     id
   );
+  if (rows?.message) {
+    return next({ message: rows.message, status: 401 });
+  }
   return res.json(rows[0]);
 };
 
@@ -73,21 +125,30 @@ let delet = async (req, res, next) => {
     return next({ status: 400, message: "invalid id" });
   }
 
-  let rows = await pg(queryPg.courses.delete, id);
+  let rows = await pg(next,queryPg.courses.delete, id);
+  if (rows?.message) {
+    return next({ message: rows.message, status: 401 });
+  }
   return res.json(rows[0]);
 };
 
 let getOne = async (req, res, next) => {
   let { id } = req.params;
   let validate = schemaUUID.validate({ id });
+
   if (validate?.error) {
     return next({ status: 400, message: "invalid id" });
   }
-  let rows = await pg(queryPg.courses.getById, id);
+  
+  let rows = await pg(next,queryPg.courses.getById, id);
+  
   if (!rows.length > 0) {
     return next({ status: 400, message: "not found" });
   }
 
+  if (rows?.message) {
+    return next({ message: rows.message, status: 401 });
+  }
   return res.json(rows[0]);
 };
 

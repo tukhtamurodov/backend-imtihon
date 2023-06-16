@@ -11,4 +11,5 @@ let routers = Router();
 routers.use(adminRouter);
 routers.use(verifyUser, [categoriesRouter, centersRouter,filialsRouter,coursesRouter]);
 
+
 module.exports = routers;

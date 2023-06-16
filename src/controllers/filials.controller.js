@@ -11,7 +11,6 @@ let schema = joi.object().keys({
   phone: joi.string().required().min(5).max(64),
   telegram: joi.string().required().min(3).max(64),
   location: joi.string().required().min(15).max(1000),
-  photo: joi.string().min(10),
 });
 
 let schemaUUID = joi.object().keys({
@@ -20,15 +19,6 @@ let schemaUUID = joi.object().keys({
 
 let post = async (req, res, next) => {
   let { name, centerId, phone, telegram, location } = req.body;
-  let image = req?.files?.image;
-  let imageName = "filial.jpg";
-  let pathImg = null;
-  if (image) {
-    let fileType = path.extname(image.name);
-    imageName = uuid() + fileType;
-
-    pathImg = path.resolve("uploads", "filials-photos", imageName);
-  }
 
   let error = schema.validate({
     name,
@@ -36,7 +26,6 @@ let post = async (req, res, next) => {
     phone,
     telegram,
     location,
-    photo: imageName,
   });
 
   if (error?.error) {
@@ -45,36 +34,30 @@ let post = async (req, res, next) => {
   }
 
   let rows = await pg(
+    next,
     queryPg.filials.post,
     name,
     centerId,
     phone,
     telegram,
-    location,
-    imageName
+    location
   );
-  if (rows.length > 0 && image) {
-    image.mv(pathImg);
+  if (rows?.message) {
+    return next({ message: rows.message, status: 401 });
   }
   return res.json({ message: "ok", rows });
 };
 
 let get = async (req, res, next) => {
-  let rows = await pg(queryPg.filials.get);
+  let rows = await pg(next, queryPg.filials.get);
+  if (rows?.message) {
+    return next({ message: rows.message, status: 401 });
+  }
   return res.json(rows);
 };
 
 let put = async (req, res, next) => {
   let { name, centerId, phone, telegram, location, photo } = req.body;
-  let image = req?.files?.image;
-  let imageName = "filial.jpg";
-  let pathImg = null;
-  if (image) {
-    let fileType = path.extname(image.name);
-    imageName = uuid() + fileType;
-
-    pathImg = path.resolve("uploads", "filials-photos", imageName);
-  }
 
   let error = schema.validate({
     name,
@@ -82,7 +65,6 @@ let put = async (req, res, next) => {
     phone,
     telegram,
     location,
-    photo:imageName,
   });
   let { id } = req.params;
   let validate = schemaUUID.validate({ id });
@@ -97,17 +79,17 @@ let put = async (req, res, next) => {
   }
 
   let rows = await pg(
+    next,
     queryPg.filials.put,
     name,
     centerId,
     phone,
     telegram,
     location,
-    imageName,
     id
   );
-  if (rows.length > 0 && image) {
-    image.mv(pathImg);
+  if (rows?.message) {
+    return next({ message: rows.message, status: 401 });
   }
   return res.json(rows[0]);
 };
@@ -120,7 +102,10 @@ let delet = async (req, res, next) => {
     return next({ status: 400, message: "invalid id" });
   }
 
-  let rows = await pg(queryPg.filials.delete, id);
+  let rows = await pg(next, queryPg.filials.delete, id);
+  if (rows?.message) {
+    return next({ message: rows.message, status: 401 });
+  }
   return res.json(rows[0]);
 };
 
@@ -130,11 +115,14 @@ let getOne = async (req, res, next) => {
   if (validate?.error) {
     return next({ status: 400, message: "invalid id" });
   }
-  let rows = await pg(queryPg.filials.getById, id);
+  let rows = await pg(next, queryPg.filials.getById, id);
   if (!rows.length > 0) {
     return next({ status: 400, message: "not found" });
   }
 
+  if (rows?.message) {
+    return next({ message: rows.message, status: 401 });
+  }
   return res.json(rows[0]);
 };
 
